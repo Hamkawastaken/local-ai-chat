@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { ChatMessage } from "~/components/ChatMessage";
 import { Button } from "~/components/ui/button";
 import { Textarea } from "~/components/ui/textarea";
+import ollama from "ollama";
 
 type Message = {
   role: "user" | "assistant";
@@ -18,8 +20,32 @@ const chatHistory: Message[] = [
 ];
 
 const ChatPage = () => {
+  const [messageInput, setMessageInput] = useState("");
+  const [streamedMessage, setStreamedMessage] = useState("");
+
   const handleSubmit = async () => {
     alert("chat");
+
+    const stream = await ollama.chat({
+      model: "deepseek-r1:1.5b",
+      messages: [
+        {
+          role: "user",
+          content: messageInput.trim(),
+        },
+      ],
+      stream: true,
+    });
+
+    let fullContent = "";
+
+    for await (const part of stream) {
+      const messageContent = part.message.content;
+
+      fullContent += messageContent;
+
+      setStreamedMessage(fullContent);
+    }
   };
 
   return (
@@ -36,6 +62,12 @@ const ChatPage = () => {
               content={message.content}
             />
           ))}
+
+          {
+            !!streamedMessage && (
+                <ChatMessage role="assistant" content={streamedMessage} />
+            )
+          }
         </div>
       </main>
       <footer className="border-t p-4">
@@ -44,6 +76,8 @@ const ChatPage = () => {
             className="flex-1"
             placeholder="Type your message here..."
             rows={5}
+            value={messageInput}
+            onChange={(e) => setMessageInput(e.target.value)}
           />
           <Button onClick={handleSubmit} type="button">
             Send

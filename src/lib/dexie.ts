@@ -35,6 +35,10 @@ class ChatDB extends Dexie {
 
         return id;
     }
+
+    async getAllThreads() {
+        return this.threads.reverse().sortBy("updated_at")
+    }
     
 }
 

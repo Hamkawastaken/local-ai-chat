@@ -1,6 +1,7 @@
 import { Moon, Plus, Sun } from "lucide-react";
 import { useState } from "react";
 import { Button } from "~/components/ui/button";
+import { useLiveQuery } from "dexie-react-hooks";
 import {
   SidebarContent,
   SidebarFooter,
@@ -38,6 +39,8 @@ export const ChatSidebar = () => {
   const [inputText, setInputText] = useState("");
 
   const { setTheme, theme } = useTheme();
+
+  const threads = useLiveQuery(() => db.getAllThreads(), []);
 
   const handleToggleTheme = () => {
     if (theme === "dark") {
@@ -99,13 +102,13 @@ export const ChatSidebar = () => {
             <SidebarGroupContent>
               <SidebarGroupLabel>Recent Chats</SidebarGroupLabel>
               <SidebarMenu>
-                {chatGroups.map((chat) => (
-                  <SidebarMenuItem key={chat.id}>
+                {threads?.map((thread) => (
+                  <SidebarMenuItem key={thread.id}>
                     <SidebarMenuButton
-                      onClick={() => setActiveChat(chat.id)}
-                      isActive={activeChat === chat.id}
+                      onClick={() => setActiveChat(thread.id)}
+                      isActive={activeChat === thread.id}
                     >
-                      {chat.name}
+                      {thread.title}
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { ChatMessage } from "~/components/ChatMessage";
 import { Button } from "~/components/ui/button";
 import { Textarea } from "~/components/ui/textarea";
@@ -17,6 +17,8 @@ const ChatPage = () => {
   const [messageInput, setMessageInput] = useState("");
   const [streamedMessage, setStreamedMessage] = useState("");
   const [streamThought, setStreamThought] = useState("");
+
+  const scrollToBottomRef = useRef<HTMLDivElement>(null);
 
   const params = useParams();
 
@@ -43,6 +45,8 @@ const ChatPage = () => {
       ],
       stream: true,
     });
+
+    setMessageInput("")
 
     let fullContent = "";
     let fullThought = "";
@@ -84,6 +88,14 @@ const ChatPage = () => {
     setStreamThought("");
   };
 
+  const handleScrollToBottom = () => {
+    scrollToBottomRef.current?.scrollIntoView();
+  };
+
+  useLayoutEffect(() => {
+    handleScrollToBottom();
+  }, [streamedMessage, streamThought, messages]);
+
   return (
     <div className="flex flex-col flex-1">
       <header className="flex items-center px-4 h-16 border-b">
@@ -105,6 +117,8 @@ const ChatPage = () => {
           {!!streamedMessage && (
             <ChatMessage role="assistant" content={streamedMessage} />
           )}
+
+          <div ref={scrollToBottomRef}></div>
         </div>
       </main>
       <footer className="border-t p-4">

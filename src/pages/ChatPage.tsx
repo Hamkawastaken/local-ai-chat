@@ -3,6 +3,7 @@ import { ChatMessage } from "~/components/ChatMessage";
 import { Button } from "~/components/ui/button";
 import { Textarea } from "~/components/ui/textarea";
 import ollama from "ollama";
+import { ThoughtMessage } from "~/components/ThoughtMessage";
 
 type Message = {
   role: "user" | "assistant";
@@ -22,6 +23,7 @@ const chatHistory: Message[] = [
 const ChatPage = () => {
   const [messageInput, setMessageInput] = useState("");
   const [streamedMessage, setStreamedMessage] = useState("");
+  const [streamThought, setStreamThought] = useState("");
 
   const handleSubmit = async () => {
     alert("chat");
@@ -38,13 +40,32 @@ const ChatPage = () => {
     });
 
     let fullContent = "";
+    let fullThought = "";
+
+    let outputMode: "think" | "response" = "think";
 
     for await (const part of stream) {
       const messageContent = part.message.content;
 
-      fullContent += messageContent;
+      if (outputMode === "think") {
+        if (
+          !(
+            messageContent.includes("<think>") ||
+            messageContent.includes("</think>")
+          )
+        ) {
+          fullThought += messageContent;
+        }
 
-      setStreamedMessage(fullContent);
+        setStreamThought(fullThought);
+
+        if (messageContent.includes("</think>")) {
+          outputMode = "response";
+        }
+      } else {
+        fullContent += messageContent;
+        setStreamedMessage(fullContent);
+      }
     }
   };
 
@@ -63,11 +84,11 @@ const ChatPage = () => {
             />
           ))}
 
-          {
-            !!streamedMessage && (
-                <ChatMessage role="assistant" content={streamedMessage} />
-            )
-          }
+          {!!streamThought && <ThoughtMessage thought={streamThought} />}
+
+          {!!streamedMessage && (
+            <ChatMessage role="assistant" content={streamedMessage} />
+          )}
         </div>
       </main>
       <footer className="border-t p-4">

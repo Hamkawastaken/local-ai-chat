@@ -6,21 +6,12 @@ import ollama from "ollama";
 import { ThoughtMessage } from "~/components/ThoughtMessage";
 import { db } from "~/lib/dexie";
 import { useParams } from "react-router";
+import { useLiveQuery } from "dexie-react-hooks";
 
 type Message = {
   role: "user" | "assistant";
   content: string;
 };
-
-const chatHistory: Message[] = [
-  { role: "assistant", content: "Hello! How can I assist you today?" },
-  { role: "user", content: "Can you explain what React is?" },
-  {
-    role: "assistant",
-    content:
-      "React is a popular JavaScript library for building user interfaces. It was developed by Facebook and is widely used for creating interactive, efficient, and reusable UI components. React uses a virtual DOM (Document Object Model) to improve performance by minimizing direct manipulation of the actual DOM. It also introduces JSX, a syntax extension that allows you to write HTML-like code within JavaScript.",
-  },
-];
 
 const ChatPage = () => {
   const [messageInput, setMessageInput] = useState("");
@@ -28,6 +19,11 @@ const ChatPage = () => {
   const [streamThought, setStreamThought] = useState("");
 
   const params = useParams();
+
+  const messages = useLiveQuery(
+    () => db.getMessagesFromThread(params.threadId as string),
+    [params.threadId]
+  );
 
   const handleSubmit = async () => {
     await db.createMessage({
@@ -83,6 +79,9 @@ const ChatPage = () => {
       thought: fullThought,
       thread_id: params.threadId as string,
     });
+
+    setStreamedMessage("");
+    setStreamThought("");
   };
 
   return (
@@ -92,11 +91,12 @@ const ChatPage = () => {
       </header>
       <main className="flex-1 overflow-auto p-4 w-full">
         <div className="mx-auto space-y-4 pb-20 max-w-screen-md">
-          {chatHistory.map((message, index) => (
+          {messages?.map((message, index) => (
             <ChatMessage
               key={index}
               role={message.role}
               content={message.content}
+              thought={message.thought}
             />
           ))}
 
